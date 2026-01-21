@@ -64,8 +64,9 @@ dma_latch_test_1(
         success = false;
     }
 
+    REG_DMA0SAD = 0;
+    REG_DMA0DAD = 0;
     REG_DMA0CNT = 0;
-    REG_DMA1CNT = 0;
 
     return success;
 }
@@ -121,7 +122,11 @@ dma_latch_test_2(
         success = false;
     }
 
+    REG_DMA0SAD = 0;
+    REG_DMA0DAD = 0;
     REG_DMA0CNT = 0;
+    REG_DMA1SAD = 0;
+    REG_DMA1DAD = 0;
     REG_DMA1CNT = 0;
 
     return success;
@@ -164,10 +169,12 @@ dma_latch_test_3(
         success = true;
     } else {
         printf("DMA LATCH 3: FAIL\n");
-        printf("    0x%08lx != 0x%08x\n", res, 0xe3530000);
+        printf("    0x%08lx != 0x%08lx\n", res, 0xe3530000);
         success = false;
     }
 
+    REG_DMA0SAD = 0;
+    REG_DMA0DAD = 0;
     REG_DMA0CNT = 0;
 
     return success;
@@ -188,47 +195,68 @@ dma_latch_test_4(
 ) {
     bool success;
     u32 data;
+    u32 value;
 
+    value = 0;
     data = 0xFEEDC0DE;
 
     REG_SOUNDCNT_X |= SNDSTAT_ENABLE;
+    REG_FIFO_A = 0;
 
-    // Setup DMA1 to copy 0xFEEDC0DE to a random location every time Timer 0 overflows.
+    // Setup DMA1 to copy 0xFEEDC0DE to REG_FIFO_A every time Timer 0 overflows.
     REG_DMA1SAD = (u32)&data;
     REG_DMA1DAD = (u32)&REG_FIFO_A;
     REG_DMA1CNT = DMA_ENABLE | DMA_SPECIAL | DMA_SRC_FIXED | DMA_DST_FIXED | DMA32 | DMA_REPEAT | 1;
 
-    // Set the timeout to a very short timer to facilitate
-    REG_TM0CNT_L = 0xFFF0;
-    REG_TM0CNT_H = TIMER_START;
+    __asm__ volatile(
+        // Set r1 to REG_TM0CNT
+        "ldr r1, =#0x04000100\n"
 
-    // Those timers are used to calculate the timeout
-    REG_TM1CNT_L = 0x0000;
-    REG_TM1CNT_H = TIMER_START | 2;
-    REG_TM2CNT_L = 0x0000;
-    REG_TM2CNT_H = TIMER_START | TIMER_COUNT;
+        // Set r2 to point to invalid memory
+        "ldr r2, =#0x04000FF0\n"
 
-    printf("DMA LATCH 4: ...\n");
+        // Set the reload value to 0xFFFF
+        "mov r0, %[reload]\n"
+        "strh r0, [r1]\n"
 
-    while (42) {
+        // Enable the timer
+        "mov r0, #0x80\n"
+        "strh r0, [r1, #0x2]\n"
+
+        // Wait for the timer to overflow, right when the DMA is about to start
+        "nop\n"
+        "nop\n"
+        "nop\n"
+        "nop\n"
+
+        // TODO: Investigate the difference in real hardware compared to Hades/NBA with/without this extra nop
+        "nop\n"
+
         // Read from invalid memory, hoping the DMA left our desired value
         // in the memory bus.
-        u32 x = *(u32 volatile *)0x04000FF0;
+        "ldr r0, [r2]\n"
+        "mov %[value], r0\n"
+        :
+            [value]"=r"(value)
+        :
+            [reload]"r"(0xFFFF)
+        :
+            "r0", "r1", "r2"
+    );
 
-        if (x == 0xFEEDC0DE) {
-            printf(CON_UP(1) "DMA LATCH 4: PASS\n");
-            success = true;
-            break;
-        } else if (REG_TM2CNT_L >= 3) {
-            printf(CON_UP(1) "DMA LATCH 4: FAIL (Timeout)\n");
-            success = false;
-            break;
-        }
+    if (value == 0xFEEDC0DE) {
+        printf("DMA LATCH 4: PASS\n");
+        success = true;
+    } else {
+        printf( "DMA LATCH 4: FAIL\n");
+        printf("    0x%08lx != 0x%08lx\n", value, 0xFEEDC0DE);
+        success = false;
     }
 
+    REG_TM0CNT_L = 0;
     REG_TM0CNT_H = 0;
-    REG_TM1CNT_H = 0;
-    REG_TM2CNT_H = 0;
+    REG_DMA1SAD = 0;
+    REG_DMA1DAD = 0;
     REG_DMA1CNT = 0;
 
     return success;
@@ -271,4 +299,3 @@ main(
 
     return (0);
 }
-
