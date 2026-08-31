@@ -3,7 +3,7 @@
 **  This file is part of the Hades GBA Emulator, and is made available under
 **  the terms of the GNU General Public License version 2.
 **
-**  Copyright (C) 2021-2024 - The Hades Authors
+**  Copyright (C) 2021-2026 - The Hades Authors
 **
 \******************************************************************************/
 
@@ -169,7 +169,7 @@ dma_latch_test_3(
         success = true;
     } else {
         printf("DMA LATCH 3: FAIL\n");
-        printf("    0x%08lx != 0x%08lx\n", res, 0xe3530000);
+        printf("    0x%08lx != 0x%08lx\n", res, 0xe3530000ul);
         success = false;
     }
 
@@ -249,7 +249,7 @@ dma_latch_test_4(
         success = true;
     } else {
         printf( "DMA LATCH 4: FAIL\n");
-        printf("    0x%08lx != 0x%08lx\n", value, 0xFEEDC0DE);
+        printf("    0x%08lx != 0x%08lx\n", value, 0xFEEDC0DEul);
         success = false;
     }
 
@@ -285,6 +285,7 @@ main(
     };
 
     nb_tests = sizeof(tests) / sizeof(tests[0]);
+    nb_tests_passed = 0;
 
     for (i = 0; i < nb_tests; ++i) {
         nb_tests_passed += tests[i]();

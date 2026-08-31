@@ -55,3 +55,4 @@ dkms.conf
 /build/
 /roms/*.sav
 /roms/*.hds
+/.hades-dbg.history
