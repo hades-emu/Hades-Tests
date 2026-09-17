@@ -23,10 +23,11 @@ main(
     irqInit();
     consoleDemoInit();
 
+    irqEnable(IRQ_VBLANK);
+
     printf("BIOS Tests\n");
     printf("  Open Bus Unaligned Access\n\n");
 
-    irqEnable(IRQ_VBLANK);
     VBlankIntrWait();
 
     u32 values[12][2] = {

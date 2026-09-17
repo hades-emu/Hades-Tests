@@ -274,6 +274,8 @@ main(
     irqInit();
     consoleDemoInit();
 
+    irqEnable(IRQ_VBLANK);
+
     printf("DMA Tests\n");
     printf("  Latch & Open Bus\n\n");
 

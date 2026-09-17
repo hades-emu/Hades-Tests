@@ -21,6 +21,8 @@ TARGETS 	:= \
 		$(ROMS_DIR)/dma-latch.gba \
 		$(ROMS_DIR)/bios-openbus.gba \
 		$(ROMS_DIR)/timer-basic.gba \
+		$(ROMS_DIR)/cheat-parv3-basic.gba \
+		$(ROMS_DIR)/cheat-parv3-advance.gba \
 
 PATH		:= $(DEVKITARM)/bin:$(PATH)
 LIBGBA		:= $(DEVKITPRO)/libgba
@@ -30,6 +32,7 @@ OBJCOPY		:= arm-none-eabi-objcopy
 
 # Compiler flags
 CFLAGS		:= \
+		-W \
 		-Wall \
 		-Wextra \
 		-std=gnu17 \

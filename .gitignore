@@ -34,7 +34,6 @@
 *.app
 *.i*86
 *.x86_64
-*.hex
 
 # Debug files
 *.dSYM/
@@ -54,5 +53,6 @@ dkms.conf
 # Build folder
 /build/
 /roms/*.sav
+/roms/*.cheats.json
 /roms/*.hds
 /.hades-dbg.history

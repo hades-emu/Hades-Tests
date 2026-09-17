@@ -9,4 +9,4 @@
 ##
 ################################################################################
 
-exec docker run --platform linux/amd64  --workdir=/app -v $(pwd):/app --user $UID:$UID devkitpro/devkitarm make "$@" -j
+exec docker run --rm --platform linux/amd64  --workdir=/app -v $(pwd):/app --user $UID:$UID devkitpro/devkitarm make "$@" -j

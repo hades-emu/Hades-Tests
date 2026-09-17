@@ -1,0 +1,14 @@
+# Hook
+C40002b8 00000000
+
+# If the special/cheat button is held, write 0xAB (8-bit)
+00000000 10200000
+000000AB 00000000
+
+# If the special/cheat button is held, write 0xBEEF (16-bit)
+00000000 12200002
+0000BEEF 00000000
+
+# If the special/cheat button is held, write 0xCAFEBABE (32-bit)
+00000000 14200004
+CAFEBABE 00000000

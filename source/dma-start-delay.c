@@ -154,10 +154,11 @@ main(
     irqInit();
     consoleDemoInit();
 
+    irqEnable(IRQ_VBLANK);
+
     printf("DMA Tests\n");
     printf("  Start Delay\n\n");
 
-    irqEnable(IRQ_VBLANK);
     VBlankIntrWait();
 
     test_01_rom_without_prefetch();

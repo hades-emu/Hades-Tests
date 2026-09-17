@@ -350,10 +350,11 @@ main(
     irqInit();
     consoleDemoInit();
 
+    irqEnable(IRQ_VBLANK);
+
     printf("Timer Tests\n");
     printf("  Basic tests\n\n\n");
 
-    irqEnable(IRQ_VBLANK);
     VBlankIntrWait();
 
     test_01_rom();
