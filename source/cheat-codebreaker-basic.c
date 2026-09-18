@@ -13,7 +13,7 @@
 #include <stdio.h>
 
 u8 volatile g_write_data[32] EWRAM_DATA = { 0 };
-u32 g_remaining_errors = 0;
+u16 g_remaining_errors = 0;
 
 THUMB_CODE
 void
@@ -21,14 +21,15 @@ cheat_codebreaker_basic_please_hook_me(
     void
 ) { }
 
+IWRAM_CODE
 void
 cheat_codebreaker_basic_print_result(
     int width,
-    uint32_t expected,
-    uint32_t result
+    uint32_t result,
+    uint32_t expected
 ) {
     if (expected != result && g_remaining_errors) {
-        printf("    0x%0*lx != 0x%0*lx\n", width * 2, expected, width * 2, result);
+        printf("    0x%0*lx != 0x%0*lx\n", width * 2, result, width * 2, expected);
         --g_remaining_errors;
     }
 }
@@ -191,13 +192,24 @@ cheat_codebreaker_basic_codes_if_button(
     void
 ) {
     bool success;
+    u32 i;
+
+    printf("IF BUTTON        WAIT...");
 
     success = (*(u16 volatile *)&g_write_data[24] == 0x2793);
 
+    for (i = 0; i < 180 && !success; ++i) {
+        VBlankIntrWait();
+        cheat_codebreaker_basic_please_hook_me();
+        success = (*(u16 volatile *)&g_write_data[24] == 0x2793);
+    }
+
+    printf(CON_LEFT(7));
+
     if (success) {
-        printf("IF BUTTON        PASS\n");
+        printf("PASS   \n");
     } else {
-        printf("IF BUTTON        FAIL\n");
+        printf("FAIL   \n");
         cheat_codebreaker_basic_print_result(2, *(u16 volatile *)&g_write_data[24], 0x2793);
     }
 
@@ -248,8 +260,8 @@ main(
     void
 ) {
     size_t nb_tests;
-    u32 nb_tests_passed;
-    u32 i;
+    u16 nb_tests_passed;
+    u16 i;
 
     irqInit();
     consoleDemoInit();
@@ -261,9 +273,10 @@ main(
     printf("\n");
     printf("Address to hook:  0x%08lx\n", (u32)&cheat_codebreaker_basic_please_hook_me & ~01);
     printf("Address to write: 0x%08lx\n", (u32)&g_write_data);
+    printf("Button to press:  SELECT\n");
     printf("\n");
 
-    // Seed the values read by the OR/AND/ADD-assign and IF conditional codes.
+    // Set the initial values of all the memory that will be read by the different cheat codes
     *(u16 volatile *)&g_write_data[0] = 0xD159;    // OR Assign
     *(u16 volatile *)&g_write_data[4] = 0x2A8F;    // AND Assign
     *(u16 volatile *)&g_write_data[6] = 0x96D2;    // IF Equal
@@ -284,9 +297,9 @@ main(
         cheat_codebreaker_basic_codes_if_not_equal,
         cheat_codebreaker_basic_codes_if_greater,
         cheat_codebreaker_basic_codes_if_lower,
-        cheat_codebreaker_basic_codes_if_button,
         cheat_codebreaker_basic_codes_add_assign,
         cheat_codebreaker_basic_codes_if_and,
+        cheat_codebreaker_basic_codes_if_button,
     };
 
     nb_tests = sizeof(tests) / sizeof(tests[0]);
@@ -298,7 +311,7 @@ main(
     }
 
     printf("\n");
-    printf("Total: %lu/%zu", nb_tests_passed, nb_tests);
+    printf("Total: %u/%zu", nb_tests_passed, nb_tests);
 
     while (true) {
         VBlankIntrWait();

@@ -268,8 +268,8 @@ main(
     void
 ) {
     size_t nb_tests;
-    u32 nb_tests_passed;
-    u32 i;
+    u16 nb_tests_passed;
+    u16 i;
 
     irqInit();
     consoleDemoInit();
@@ -294,7 +294,7 @@ main(
     }
 
     printf("\n");
-    printf("Total: %lu/%zu\n", nb_tests_passed, nb_tests);
+    printf("Total: %u/%zu\n", nb_tests_passed, nb_tests);
 
     while (true) {
         VBlankIntrWait();
