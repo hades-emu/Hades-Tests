@@ -23,6 +23,7 @@ TARGETS 	:= \
 		$(ROMS_DIR)/timer-basic.gba \
 		$(ROMS_DIR)/cheat-parv3-basic.gba \
 		$(ROMS_DIR)/cheat-parv3-advance.gba \
+		$(ROMS_DIR)/cheat-codebreaker-basic.gba \
 
 PATH		:= $(DEVKITARM)/bin:$(PATH)
 LIBGBA		:= $(DEVKITPRO)/libgba
