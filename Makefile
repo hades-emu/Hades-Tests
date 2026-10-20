@@ -24,6 +24,7 @@ TARGETS 	:= \
 		$(ROMS_DIR)/cheat-parv3-basic.gba \
 		$(ROMS_DIR)/cheat-parv3-advance.gba \
 		$(ROMS_DIR)/cheat-codebreaker-basic.gba \
+		$(ROMS_DIR)/cheat-codebreaker-advance.gba \
 		$(ROMS_DIR)/cheat-gameshark-basic.gba \
 		$(ROMS_DIR)/cheat-gameshark-advance.gba \
 
