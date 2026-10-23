@@ -121,10 +121,10 @@ NEW_TEST(1, TEST_01_RESULTS, {
 ** Run DMA0 with TM0CNT as the source address, but immediately stop it.
 */
 u16 TEST_02_RESULTS[TEST_KIND_MAX][3] = {
-    [TEST_KIND_IWRAM]                   = { 0x0016, 0x0020, 0x0032 },
-    [TEST_KIND_EWRAM]                   = { 0x005B, 0x0085, 0x00CE },
-    [TEST_KIND_ROM_WITH_PREFETCH]       = { 0x0067, 0x0098, 0x00E4 },
-    [TEST_KIND_ROM_WITHOUT_PREFETCH]    = { 0x0073, 0x00A7, 0x00FE },
+    [TEST_KIND_IWRAM]                   = { 0x0016, 0x0020, 0x0030 },
+    [TEST_KIND_EWRAM]                   = { 0x005B, 0x0085, 0x00C2 },
+    [TEST_KIND_ROM_WITH_PREFETCH]       = { 0x0067, 0x0098, 0x00D8 },
+    [TEST_KIND_ROM_WITHOUT_PREFETCH]    = { 0x0073, 0x00A7, 0x00F2 },
 };
 NEW_TEST(2, TEST_02_RESULTS, {
     REG_TM0CNT_H = 0;
