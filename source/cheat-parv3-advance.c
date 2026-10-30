@@ -12,8 +12,11 @@
 #include <gba_systemcalls.h>
 #include <stdio.h>
 
-u8 volatile g_write_data[8] EWRAM_DATA = { 0 };
+u8 volatile g_write_data[0x60] EWRAM_DATA = { 0 };
 u16 g_remaining_errors = 0;
+
+#define RESULT_DEFAULT(i)   ((u8)((i) * 0x9D + 0x3C))
+#define RESULT_WRITTEN(i)   ((u8)~RESULT_DEFAULT(i))
 
 THUMB_CODE
 void
@@ -102,6 +105,133 @@ cheat_parv3_advance_codes_io(
     return success;
 }
 
+IWRAM_CODE
+bool
+cheat_parv3_advance_check_results(
+    char const *name,
+    size_t base,
+    bool const *taken,
+    size_t len
+) {
+    bool success;
+    size_t i;
+
+    success = true;
+    for (i = 0; i < len; ++i) {
+        success &= (g_write_data[base + i] == (taken[i] ? RESULT_WRITTEN(base + i) : RESULT_DEFAULT(base + i)));
+    }
+
+    printf("%-17s%s\n", name, success ? "PASS" : "FAIL");
+
+    for (i = 0; i < len; ++i) {
+        cheat_parv3_advance_print_result(
+            g_write_data[base + i],
+            taken[i] ? RESULT_WRITTEN(base + i) : RESULT_DEFAULT(base + i)
+        );
+    }
+
+    return success;
+}
+
+IWRAM_CODE
+bool
+cheat_parv3_advance_check_condition(
+    char const *name,
+    size_t base
+) {
+    // 8-bit true, 8-bit false, 16-bit true, 16-bit false, 32-bit true, 32-bit false
+    static bool const taken[] = { true, false, true, false, true, false };
+
+    return cheat_parv3_advance_check_results(name, base, taken, sizeof(taken) / sizeof(taken[0]));
+}
+
+IWRAM_CODE
+bool
+cheat_parv3_advance_codes_if_equal(
+    void
+) {
+    return cheat_parv3_advance_check_condition("IF EQUAL", 0x08);
+}
+
+IWRAM_CODE
+bool
+cheat_parv3_advance_codes_if_not_equal(
+    void
+) {
+    return cheat_parv3_advance_check_condition("IF NOT EQUAL", 0x0E);
+}
+
+IWRAM_CODE
+bool
+cheat_parv3_advance_codes_if_signed_lower(
+    void
+) {
+    return cheat_parv3_advance_check_condition("IF SIGNED <", 0x14);
+}
+
+IWRAM_CODE
+bool
+cheat_parv3_advance_codes_if_signed_greater(
+    void
+) {
+    return cheat_parv3_advance_check_condition("IF SIGNED >", 0x1A);
+}
+
+IWRAM_CODE
+bool
+cheat_parv3_advance_codes_if_unsigned_lower(
+    void
+) {
+    return cheat_parv3_advance_check_condition("IF UNSIGNED <", 0x20);
+}
+
+IWRAM_CODE
+bool
+cheat_parv3_advance_codes_if_unsigned_greater(
+    void
+) {
+    return cheat_parv3_advance_check_condition("IF UNSIGNED >", 0x26);
+}
+
+IWRAM_CODE
+bool
+cheat_parv3_advance_codes_if_and(
+    void
+) {
+    return cheat_parv3_advance_check_condition("IF AND", 0x2C);
+}
+
+IWRAM_CODE
+bool
+cheat_parv3_advance_codes_if_actions(
+    void
+) {
+    static bool const taken[] = {
+        false, true,                // Always skip next line
+        false, false, true,         // Always skip next 2 lines
+        true, true, true,           // Execute next 2 codes (true)
+        false, false, true,         // Execute next 2 codes (false)
+        false, true,                // Execute next code (false)
+    };
+
+    return cheat_parv3_advance_check_results("IF ACTIONS", 0x32, taken, sizeof(taken) / sizeof(taken[0]));
+}
+
+IWRAM_CODE
+bool
+cheat_parv3_advance_codes_if_blocks(
+    void
+) {
+    static bool const taken[] = {
+        true, true, true, true,                 // IF (true) ... ENDIF
+        false, false, false, true,              // IF (false) ... ENDIF
+        true, true, true, false, false, true,   // IF (true) ... ELSE ... ENDIF
+        false, false, false, true, true, true,  // IF (false) ... ELSE ... ENDIF
+    };
+
+    return cheat_parv3_advance_check_results("IF BLOCKS", 0x3F, taken, sizeof(taken) / sizeof(taken[0]));
+}
+
 THUMB_CODE
 int
 main(
@@ -127,14 +257,36 @@ main(
     *(u32 volatile *)(REG_BASE + 0x90) = 0xFEEDFACE;
     *(u32 volatile *)(REG_BASE + 0x94) = 0xACE0FBA5;
 
+    for (i = 0x08; i < 0x53; ++i) {
+        g_write_data[i] = RESULT_DEFAULT(i);
+    }
+
+    // Data used for signed comparison.
+    // The hex constats are negative numbers when read as signed values
+    *(u32 volatile *)&g_write_data[0x58] = 0xC3A51F60;  // IF (32-bit)
+    *(u16 volatile *)&g_write_data[0x5C] = 0x8E17;      // IF (16-bit)
+    g_write_data[0x5E] = 0x9C;                          // IF (8-bit)
+    g_write_data[0x5F] = 0x5A;                          // Garbage read by a too-wide 8-bit IF
+
+    cheat_parv3_advance_please_hook_me();
+
     bool (* const tests[])(void) = {
         cheat_parv3_advance_codes_button,
         cheat_parv3_advance_codes_io,
+        cheat_parv3_advance_codes_if_equal,
+        cheat_parv3_advance_codes_if_not_equal,
+        cheat_parv3_advance_codes_if_signed_lower,
+        cheat_parv3_advance_codes_if_signed_greater,
+        cheat_parv3_advance_codes_if_unsigned_lower,
+        cheat_parv3_advance_codes_if_unsigned_greater,
+        cheat_parv3_advance_codes_if_and,
+        cheat_parv3_advance_codes_if_actions,
+        cheat_parv3_advance_codes_if_blocks,
     };
 
     nb_tests = sizeof(tests) / sizeof(tests[0]);
     nb_tests_passed = 0;
-    g_remaining_errors = 5;
+    g_remaining_errors = 2;
 
     for (i = 0; i < nb_tests; ++i) {
         nb_tests_passed += tests[i]();
